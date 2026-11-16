@@ -86,13 +86,15 @@ class ReviewEvent(Base):
     to_status: Mapped[str]
     reply_before: Mapped[str | None] = mapped_column(Text)
     reply_after: Mapped[str | None] = mapped_column(Text)
+    safety_flags_before: Mapped[list[str]] = mapped_column(JSON)
+    generation_failure_before: Mapped[str | None]
     reason: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[str] = mapped_column(default=utc_timestamp)
 
 
 def open_database(path: Path) -> Engine:
     path.parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(URL.create("sqlite+pysqlite", database=str(path)))
+    engine = create_engine(URL.create("sqlite+pysqlite", database=str(path)), hide_parameters=True)
 
     @event.listens_for(engine, "connect")
     def enable_foreign_keys(connection, _record) -> None:

@@ -26,6 +26,10 @@ class ImportedMessage:
     message_text: str
 
 
+def has_unsupported_controls(text: str) -> bool:
+    return bool(_CONTROL.search(text))
+
+
 def parse_import(body: bytes) -> list[ImportedMessage]:
     messages = []
     seen = set()
@@ -41,7 +45,7 @@ def parse_import(body: bytes) -> list[ImportedMessage]:
             if not row:
                 continue
             location = f"CSV record ending on line {reader.line_num}"
-            if len(row) != len(header) or any(_CONTROL.search(field) for field in row):
+            if len(row) != len(header) or any(has_unsupported_controls(field) for field in row):
                 raise ValueError(f"{location} is malformed.")
             source_id, name, text = row[id_col].strip(), row[name_col].strip(), row[text_col].strip()
             if not _SOURCE_ID.fullmatch(source_id):
