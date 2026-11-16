@@ -1,0 +1,157 @@
+{
+  "source": "milestone-2-dev-paced.json",
+  "source_sha256": "5b347c90e73376f059e8de778c930a47bb2b76842e9c68cbb5cffe11e58e3a89",
+  "safety_code_commit": "63be35d",
+  "method": "Offline safety recheck of previously generated drafts",
+  "additional_drafts_withheld_ids": [
+    8,
+    14
+  ],
+  "drafts_available_for_human_review": 13,
+  "messages": [
+    {
+      "message_id": 1,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 2,
+      "status": "pending_review",
+      "live_draft_failure": "unsafe_draft",
+      "additional_safety_flags": [],
+      "requires_manual_writing": true
+    },
+    {
+      "message_id": 3,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 4,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 5,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 6,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 7,
+      "status": "pending_review",
+      "live_draft_failure": "unsafe_draft",
+      "additional_safety_flags": [],
+      "requires_manual_writing": true
+    },
+    {
+      "message_id": 8,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [
+        "company_policy"
+      ],
+      "requires_manual_writing": true
+    },
+    {
+      "message_id": 9,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 10,
+      "status": "pending_review",
+      "live_draft_failure": "skipped_after_candidate_instruction",
+      "additional_safety_flags": [],
+      "requires_manual_writing": true
+    },
+    {
+      "message_id": 11,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 12,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 13,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 14,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [
+        "company_policy"
+      ],
+      "requires_manual_writing": true
+    },
+    {
+      "message_id": 15,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 16,
+      "status": "pending_review",
+      "live_draft_failure": "skipped_after_candidate_instruction",
+      "additional_safety_flags": [],
+      "requires_manual_writing": true
+    },
+    {
+      "message_id": 17,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 18,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 19,
+      "status": "pending_review",
+      "live_draft_failure": null,
+      "additional_safety_flags": [],
+      "requires_manual_writing": false
+    },
+    {
+      "message_id": 20,
+      "status": "pending_review",
+      "live_draft_failure": "skipped_after_candidate_instruction",
+      "additional_safety_flags": [],
+      "requires_manual_writing": true
+    }
+  ]
+}

@@ -56,14 +56,39 @@ Every prediction was `other`. This table records the populated column of both co
 - Review #14’s `role_information` label, which interprets “budget for this hire” as compensation. #9 and #26 are provisionally `other` because both refer to missing context. Record adjudications separately from the scored fixture.
 - Primary intent is the only scored field. The sample is small and synthetic, and candidate commands are represented by a few examples. The results are insufficient to estimate production performance or security.
 
-## Day 2
+## Day 2 · 2026-11-16 (PKT)
 
-- **Date**
-- **Active hours**
-- **Work and commit references**
-- **Commands and actual results**
-- **Failures and corrections**
-- **Personal reflection**
+**Active hours**
+
+**Personal reflection**
+
+### Verified work
+
+| Commit | Work |
+| --- | --- |
+| `e923794` | Ignored local environment files and common secret files. Verified `.env` was neither tracked nor staged and `.env.example` was eligible for tracking. |
+| `c9b61b3` | Added Groq SDK integration, strict schemas, the pending-review pipeline, and development-only evaluation. |
+| `38c1640` | Tested bounded retries and expanded hiring-commitment checks. |
+| `674786a` | Saved the first live run with predictions, pending drafts, failures, and token usage. |
+| `f34715b` | Screened assistant-directed candidate text, expanded draft safety checks, and added serial request pacing. |
+| `63be35d` | Added regression cases and safety checks for invented recruiting disclosure policies. |
+
+Before implementation, a development-only rerun reproduced 4/20 correct and 20 predictions of `other`. Traces of #1, #8, and #11 showed narrow keyword coverage and the early fallback on an unmatched request. The approved secondary label for #7 is blank in Milestone 2 scoring. #13 and #14 retain their original labels. The fixture and Milestone 1 results were preserved.
+
+### Failures and corrections
+
+- The first mocked run passed 45 cases and failed 1. The pinned SDK rejected `content_filter` in its response enum, so the provider adapter now maps that case to a refusal before returning a sanitized failure.
+- Before the credential was configured, the evaluator skipped live requests. After the user configured the key, the first live run reported 13/20 correct, including six HTTP 429 classification failures and one wrong intent. Twelve drafts reached pending review, including two influenced by assistant-directed text (#10 and #20). Two additional drafts were withheld for date or time signals.
+- The revised pipeline screens recognizable assistant-directed segments from classification input and skips drafting for detected attempts. Affected messages require manual writing. The draft checks also cover more unverified promises. The revised evaluator uses one worker and an eight-second minimum interval between logical requests.
+- The paced run produced 15 pending drafts. Assistant review found unsupported disclosure claims in #8 and #14. Reapplying the new guard offline withheld both, leaving 13 drafts available for human review. The live evidence was preserved.
+
+### Verification
+
+- `.venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_classifier.py tests/test_ai_pipeline.py tests/test_ai_evaluation.py` passed 60 tests. The legacy dataset test file remains intact and was excluded because it opens the full fixture.
+- `uv pip check --python .venv/bin/python` reported compatible pinned dependencies.
+- `env -u GROQ_LOG .venv/bin/python -B -m hiring_inbox.evaluate_ai --output evidence/milestone-2-dev.json` recorded the first development run at 23:30:58 PKT. Reported usage cost about $0.00660.
+- The same command with output `evidence/milestone-2-dev-paced.json` recorded the paced run at 23:35:34 PKT. It scored 19/20 (95%) without API failures. All three flagged injection cases went to manual writing. All 37 calls reported usage, estimated at $0.00802.
+- Independently reconciled message IDs, pending-review status, correct predictions, confusion counts, token totals, and estimated cost in both live artifacts. Results and the blank human-review rubric are in `docs/evaluation-m2.md` and `docs/reply-review-m2.md`.
 
 ## Day 3
 
