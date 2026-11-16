@@ -9,3 +9,6 @@ __pycache__/
 *.p12
 *.pfx
 secrets/
+/var/
+*.sqlite3
+*.sqlite3-*
