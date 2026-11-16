@@ -14,3 +14,9 @@ secrets/
 *.sqlite3-*
 *.db
 *.db-*
+/web/node_modules/
+/web/.next/
+/web/next-env.d.ts
+*.tsbuildinfo
+/output/playwright/
+/.playwright-cli/
