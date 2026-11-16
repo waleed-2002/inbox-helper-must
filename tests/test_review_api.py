@@ -99,6 +99,45 @@ def test_duplicate_import_and_processing_are_idempotent(inbox):
     assert exported(client, batch_id) == []
 
 
+def test_batch_list_discovers_existing_imports_after_restart(tmp_path):
+    database = tmp_path / "batches.sqlite3"
+    with TestClient(create_app(database)) as client:
+        assert client.get("/batches").json() == {"batches": []}
+        first = import_csv(client, HEADER + "1,Taylor,Checking in\n").json()["batch_id"]
+        second = import_csv(client, HEADER + "1,Casey,Hello\n2,Quinn,Any news\n").json()["batch_id"]
+    with TestClient(create_app(database)) as client:
+        batches = client.get("/batches").json()["batches"]
+    assert [(batch["batch_id"], batch["message_count"]) for batch in batches] == [(second, 2), (first, 1)]
+    assert all(batch["created_at"].endswith("+00:00") for batch in batches)
+
+
+def test_cors_is_limited_to_configured_browser_origin(tmp_path, monkeypatch):
+    origin = "http://127.0.0.1:3000"
+    monkeypatch.setenv("INBOX_WEB_ORIGIN", origin)
+    with TestClient(create_app(tmp_path / "cors.sqlite3")) as client:
+        preflight = {"Access-Control-Request-Method": "PATCH", "Access-Control-Request-Headers": "content-type"}
+        allowed = client.options("/drafts/1", headers={**preflight, "Origin": origin})
+        assert allowed.status_code == 200
+        assert allowed.headers["access-control-allow-origin"] == origin
+        assert "access-control-allow-credentials" not in allowed.headers
+        forbidden = client.options("/drafts/1", headers={**preflight, "Origin": "http://localhost:3000"})
+        assert forbidden.status_code == 400
+        assert "access-control-allow-origin" not in forbidden.headers
+        receipt = import_csv(client, HEADER + "1,Casey,Hello\n").json()
+        response = client.get(f'/batches/{receipt["batch_id"]}/export', headers={"Origin": origin})
+        assert response.headers["access-control-expose-headers"] == "Content-Disposition"
+
+
+def test_cors_defaults_off_and_refuses_public_origins(tmp_path, monkeypatch):
+    monkeypatch.delenv("INBOX_WEB_ORIGIN", raising=False)
+    with TestClient(create_app(tmp_path / "cors.sqlite3")) as client:
+        response = client.get("/batches", headers={"Origin": "http://127.0.0.1:3000"})
+        assert "access-control-allow-origin" not in response.headers
+    monkeypatch.setenv("INBOX_WEB_ORIGIN", "https://public.example")
+    with pytest.raises(ValueError, match="exact HTTP loopback origin"):
+        create_app(tmp_path / "cors.sqlite3")
+
+
 def test_approval_edit_rejection_and_history(inbox):
     client, provider = inbox
     batch_id, draft_id = start_one(client, provider)

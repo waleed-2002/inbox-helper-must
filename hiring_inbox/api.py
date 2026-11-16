@@ -1,6 +1,7 @@
 """Local FastAPI entry point for inbox imports, processing, and review."""
 
 import os
+import re
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path as FilePath
@@ -9,6 +10,7 @@ from typing import Annotated, Literal
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import sessionmaker
@@ -23,6 +25,7 @@ from hiring_inbox.review_service import ReviewService, ServiceError, recover_int
 _ROOT = FilePath(__file__).resolve().parents[1]
 _ID = Annotated[int, Path(gt=0, lt=2**63)]
 _DRAFT_STATUS = Literal["pending_review", "approved", "rejected"]
+_LOOPBACK_ORIGIN = re.compile(r"http://(?:localhost|127\.0\.0\.1|\[::1\]):([1-9][0-9]{0,4})")
 
 
 class ReviewRequest(BaseModel):
@@ -40,6 +43,16 @@ class ImportReceipt(BaseModel):
     batch_id: int
     message_count: int
     duplicate: bool
+
+
+class BatchSummary(BaseModel):
+    batch_id: int
+    created_at: str
+    message_count: int
+
+
+class BatchList(BaseModel):
+    batches: list[BatchSummary]
 
 
 class BatchStatus(BaseModel):
@@ -158,7 +171,19 @@ def create_app(database_path: FilePath | None = None, provider: StructuredProvid
         finally:
             engine.dispose()
 
-    app = FastAPI(title="MUST Hiring Inbox", version="0.3.0", lifespan=lifespan)
+    app = FastAPI(title="MUST Hiring Inbox", version="0.4.0", lifespan=lifespan)
+    web_origin = os.environ.get("INBOX_WEB_ORIGIN")
+    if web_origin:
+        origin_match = _LOOPBACK_ORIGIN.fullmatch(web_origin)
+        if origin_match is None or int(origin_match[1]) > 65535:
+            raise ValueError("INBOX_WEB_ORIGIN must be an exact HTTP loopback origin with a port.")
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[web_origin],
+            allow_methods=["GET", "POST", "PATCH"],
+            allow_headers=["Content-Type"],
+            expose_headers=["Content-Disposition"],
+        )
 
     @app.exception_handler(ServiceError)
     async def handle_service_error(_request: Request, error: ServiceError) -> JSONResponse:
@@ -191,6 +216,10 @@ def create_app(database_path: FilePath | None = None, provider: StructuredProvid
         if result["duplicate"]:
             response.status_code = 200
         return result
+
+    @app.get("/batches", response_model=BatchList)
+    def batches(service: _Service) -> dict:
+        return {"batches": service.list_batches()}
 
     @app.post("/batches/{batch_id}/process", response_model=BatchStatus)
     def process_batch(batch_id: _ID, service: _Service) -> dict:

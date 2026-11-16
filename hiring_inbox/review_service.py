@@ -6,7 +6,7 @@ from contextlib import AbstractContextManager, contextmanager
 from threading import Lock
 from typing import Literal
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -189,6 +189,17 @@ class ReviewService:
                     candidate_name=row.candidate_name, message_text=row.message_text,
                 ) for row in messages)
         return {"batch_id": batch_id, "message_count": len(messages), "duplicate": duplicate}
+
+    def list_batches(self) -> list[dict]:
+        with self.sessions() as session:
+            rows = session.execute(
+                select(Batch.id, Batch.created_at, func.count(Message.id))
+                .outerjoin(Message, Message.batch_id == Batch.id)
+                .group_by(Batch.id, Batch.created_at)
+                .order_by(Batch.created_at.desc(), Batch.id.desc())
+            ).all()
+        return [{"batch_id": batch_id, "created_at": created_at, "message_count": count}
+                for batch_id, created_at, count in rows]
 
     def _set_batch_status(self, batch_id: int, status: str) -> None:
         with self.sessions.begin() as session:
