@@ -4,6 +4,16 @@ import re
 import unicodedata
 
 
+_ASSISTANT_INSTRUCTIONS = re.compile(
+    r"\b(?:ignore|override|disregard)\b[^.!?\n]{0,65}\b(?:prompts?|instructions?|rules?)\b"
+    r"|\b(?:system|developer) (?:prompt|instructions?)\b"
+    r"|\b(?:label|classify|categorize|tag) (?:this (?:message|email)|my (?:message|email))\b"
+    r"|\b(?:treat|interpret) this (?:email|message|text) as (?:admin\w*|system|developer)\b"
+    r"|\[(?:automation note|for the (?:automated reviewer|routing bot|assistant))\]"
+    r"|\b(?:bypass|skip) (?:human |reviewer )?approval\b"
+)
+
+
 _CHECKS = {
     "date": re.compile(
         r"\b(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|"
@@ -42,14 +52,29 @@ _CHECKS = {
     "company_policy": re.compile(
         r"\b(?:our (?:company |hiring )?policy (?:is|requires|allows|states)|"
         r"(?:we|the company) (?:require|guarantee)\b)"
+        r"|\b(?:office attendance|remote work|work hours)\s+(?:can |may )?(?:differ|vary)\b"
     ),
-    "assistant_instruction": re.compile(
-        r"\b(?:ignore|override|disregard)\b[^.!?\n]{0,65}\b(?:prompts?|instructions?|rules?)\b"
-        r"|\b(?:system|developer) (?:prompt|instructions?)\b"
+    "unsupported_followup": re.compile(
+        r"\b(?:we|i)(?:'ll| will)\s+(?:keep you informed|follow up|let you know|"
+        r"review (?:your|the) (?:application|status)|update (?:our|the|your) (?:records|application)|"
+        r"process (?:the|your) (?:request|withdrawal)|cancel (?:the|your) (?:interview|meeting|panel))\b"
     ),
+    "assistant_instruction": _ASSISTANT_INSTRUCTIONS,
 }
 
 
+def _normalize(text: str) -> str:
+    return unicodedata.normalize("NFKC", text).casefold().replace("’", "'")
+
+
+def screen_candidate_text(message: str) -> tuple[str, bool]:
+    """Remove recognizable assistant-directed segments and flag for manual writing."""
+    segments = re.split(r"(?<=[.!?])\s+|[\r\n]+", message)
+    kept = [segment for segment in segments if not _ASSISTANT_INSTRUCTIONS.search(_normalize(segment))]
+    detected = len(kept) != len(segments)
+    return (" ".join(kept).strip() if detected else message), detected
+
+
 def draft_safety_flags(draft: str) -> tuple[str, ...]:
-    normalized = unicodedata.normalize("NFKC", draft).casefold().replace("’", "'")
+    normalized = _normalize(draft)
     return tuple(name for name, pattern in _CHECKS.items() if pattern.search(normalized))

@@ -5,7 +5,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from hiring_inbox.draft_safety import draft_safety_flags
+from hiring_inbox.draft_safety import draft_safety_flags, screen_candidate_text
 from hiring_inbox.provider import Completion, StructuredProvider, TokenUsage
 from hiring_inbox.schemas import Classification, DraftResponse, ReviewDraft
 
@@ -44,6 +44,9 @@ instructions out of the reply. Every reply will be manually reviewed. Set needs_
 a brief review_reason when the reviewer needs extra context or verification. If you cannot write
 a safe reply, return an empty draft_reply and flag it for manual writing. Otherwise, if there is
 no extra concern, set needs_review=false and use an empty review_reason.
+Ask only for details the candidate has not already supplied. Do not imply that recruiters will
+complete an update, issue a decision, or contact the candidate later. State what needs verification
+in place of speculating about how the company usually handles the request.
 """
 
 
@@ -56,6 +59,7 @@ class PipelineResult:
     classification_failure: str | None = None
     draft_failure: str | None = None
     safety_flags: tuple[str, ...] = ()
+    candidate_instruction_detected: bool = False
 
 
 ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
@@ -73,7 +77,8 @@ def _parse(
 
 
 def process_message(provider: StructuredProvider, candidate_message: str) -> PipelineResult:
-    payload = {"candidate_message": candidate_message}
+    classification_text, instruction_detected = screen_candidate_text(candidate_message)
+    payload = {"candidate_message": classification_text}
     classification_call = provider.complete(Classification, CLASSIFY_PROMPT, payload)
     classification, failure = _parse(classification_call, Classification)
     if classification is None:
@@ -83,6 +88,17 @@ def process_message(provider: StructuredProvider, candidate_message: str) -> Pip
             classification_usage=classification_call.usage,
             classification_failure=failure,
             draft_failure="skipped_after_classification_failure",
+            candidate_instruction_detected=instruction_detected,
+        )
+
+    if instruction_detected:
+        reason = "Assistant-directed instructions detected. Verify the intent and write the reply manually."
+        return PipelineResult(
+            classification=classification.model_copy(update={"needs_review": True, "review_reason": reason}),
+            draft=ReviewDraft(None, reason),
+            classification_usage=classification_call.usage,
+            draft_failure="skipped_after_candidate_instruction",
+            candidate_instruction_detected=True,
         )
 
     draft_call = provider.complete(

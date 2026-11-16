@@ -4,6 +4,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from time import monotonic, sleep
 from typing import Protocol
 
 from dotenv import dotenv_values
@@ -39,13 +40,17 @@ class StructuredProvider(Protocol):
 
 
 class GroqProvider:
-    def __init__(self, client: Groq, model: str, reasoning_effort: str) -> None:
+    def __init__(
+        self, client: Groq, model: str, reasoning_effort: str, *, request_interval: float = 0
+    ) -> None:
         self.client = client
         self.model = model
         self.reasoning_effort = reasoning_effort
+        self.request_interval = request_interval
+        self._next_request_at = 0.0
 
     @classmethod
-    def from_environment(cls, env_file: Path) -> "GroqProvider | None":
+    def from_environment(cls, env_file: Path, *, request_interval: float = 0) -> "GroqProvider | None":
         # Read dotenv settings for this client only. The SDK receives the key directly.
         file_settings = dotenv_values(env_file, interpolate=False)
         api_key = (os.environ.get("GROQ_API_KEY", file_settings.get("GROQ_API_KEY")) or "").strip()
@@ -67,11 +72,17 @@ class GroqProvider:
             max_retries=2,
             _strict_response_validation=True,
         )
-        return cls(client, model, effort)
+        return cls(client, model, effort, request_interval=request_interval)
 
     def complete(
         self, schema: type[BaseModel], instructions: str, payload: dict[str, str]
     ) -> Completion:
+        # The development evaluator calls the paced client serially.
+        if self.request_interval:
+            delay = self._next_request_at - monotonic()
+            if delay > 0:
+                sleep(delay)
+            self._next_request_at = monotonic() + self.request_interval
         try:
             response = self.client.chat.completions.create(
                 model=self.model,

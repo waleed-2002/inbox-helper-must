@@ -4,7 +4,6 @@ import argparse
 import csv
 import hashlib
 import json
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import datetime
 from itertools import islice
@@ -19,7 +18,7 @@ from hiring_inbox.provider import DEFAULT_MODEL, GroqProvider, TokenUsage
 
 DEV_SIZE = 20
 AMBIGUOUS_IDS = {7, 9, 14}
-MAX_WORKERS = 2
+REQUEST_INTERVAL_SECONDS = 8
 UNCLASSIFIED = "unclassified"
 LABELS = [intent.value for intent in Intent]
 BASELINE = {"commit": "ca8b2e9", "correct": 4, "total": DEV_SIZE, "accuracy": 0.2}
@@ -79,6 +78,7 @@ def describe(row: dict[str, str], result: PipelineResult) -> dict:
         "predicted_intent": classification.primary_intent.value if classification else None,
         "classification": classification.model_dump(mode="json") if classification else None,
         "classification_failure": result.classification_failure,
+        "candidate_instruction_detected": result.candidate_instruction_detected,
         "draft_failure": result.draft_failure,
         "safety_flags": result.safety_flags,
         "draft": {**asdict(result.draft), "requires_manual_writing": result.draft.requires_manual_writing},
@@ -116,7 +116,7 @@ def summarize_usage(model: str, results: list[PipelineResult]) -> dict:
     usage: list[TokenUsage] = []
     attempted_calls = len(results)
     for result in results:
-        if result.classification is not None:
+        if result.classification is not None and not result.candidate_instruction_detected:
             attempted_calls += 1
         usage.extend(item for item in (result.classification_usage, result.draft_usage) if item is not None)
     prompt = sum(item.prompt_tokens for item in usage)
@@ -151,7 +151,7 @@ def main() -> None:
 
     env_file = DATASET.parents[1] / ".env"
     try:
-        provider = GroqProvider.from_environment(env_file)
+        provider = GroqProvider.from_environment(env_file, request_interval=REQUEST_INTERVAL_SECONDS)
     except ValueError as error:
         parser.error(str(error))
     if provider is None:
@@ -160,8 +160,8 @@ def main() -> None:
 
     rows = load_development(DATASET)
     started_at = datetime.now(ZoneInfo("Asia/Karachi"))
-    with provider.client, ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        results = list(pool.map(lambda row: process_message(provider, row["message_text"]), rows))
+    with provider.client:
+        results = [process_message(provider, row["message_text"]) for row in rows]
     predictions = [describe(row, result) for row, result in zip(rows, results, strict=True)]
     metrics = score(predictions)
     usage = summarize_usage(provider.model, results)
@@ -173,6 +173,8 @@ def main() -> None:
         "model": provider.model,
         "reasoning_effort": provider.reasoning_effort,
         "strict_json_schema": True,
+        "evaluation_concurrency": 1,
+        "minimum_request_interval_seconds": provider.request_interval,
         "prompt_sha256": {
             name: hashlib.sha256(prompt.encode()).hexdigest()
             for name, prompt in (("classification", CLASSIFY_PROMPT), ("draft", DRAFT_PROMPT))
