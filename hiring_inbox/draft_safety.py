@@ -53,6 +53,12 @@ _CHECKS = {
         r"\b(?:our (?:company |hiring )?policy (?:is|requires|allows|states)|"
         r"(?:we|the company) (?:require|guarantee)\b)"
         r"|\b(?:office attendance|remote work|work hours)\s+(?:can |may )?(?:differ|vary)\b"
+        r"|\b(?:salary|pay|compensation|benefits?)\s+(?:(?:details|information|range)\s+)?"
+        r"(?:is|are|remain) (?:strictly )?(?:confidential|private)\b"
+        r"|\b(?:salary|pay|compensation|benefits?)\b[^.!?\n]{0,60}"
+        r"\b(?:will be|is only|are only) (?:discussed|shared|disclosed)\b"
+        r"|\b(?:we|i) (?:can't|cannot|don't|do not|are unable to) (?:share|disclose) "
+        r"(?:the |your )?(?:status|decision|salary|pay|compensation)\b"
     ),
     "unsupported_followup": re.compile(
         r"\b(?:we|i)(?:'ll| will)\s+(?:keep you informed|follow up|let you know|"
