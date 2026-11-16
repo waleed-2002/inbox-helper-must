@@ -112,14 +112,35 @@ Before implementation, a development-only rerun reproduced 4/20 correct and 20 p
 
 Original pipeline code, dataset, and evaluation artifacts remain at their Milestone 2 versions. No human review scores were recorded.
 
-## Day 4
+## Day 4 · 2026-11-17 (PKT)
 
-- **Date**
-- **Active hours**
-- **Work and commit references**
-- **Commands and actual results**
-- **Failures and corrections**
-- **Personal reflection**
+**Active hours**
+
+**Personal reflection**
+
+### Verified work
+
+| Commit | Work |
+| --- | --- |
+| `0f88feb` | Ran the published UI/UX Pro Max design-system, Next.js, and keyboard focus guidance and documented the selected tokens and layout. |
+| `d5516c1` | Added batch discovery and opt-in loopback CORS with three regression tests. |
+| `02fc1c5` | Built the responsive Next.js workspace with CSV import, processing progress, grouped inbox, revision-aware review, and approved-only Outbox. |
+
+### Verification
+
+- `npm ci --offline --no-fund --no-audit`, `npm run lint`, `npm run typecheck`, and `npm run build` passed in `web/`. The install reported an ESLint 9 deprecation notice. The Next.js lint configuration uses plugins with ESLint 9 peer support.
+- `.venv/bin/python -B -m pytest -q -p no:cacheprovider --ignore=tests/test_dataset.py` passed 92 tests with the existing Starlette TestClient warning. `uv pip check --python .venv/bin/python` found compatible Python dependencies.
+- Playwright Chromium exercised the production-built UI and Uvicorn with temporary SQLite and a deterministic Groq provider substitute. The desktop smoke imported four new fictional messages, observed one processing request, rejected malformed input, reopened a duplicate import, and downloaded an approved CSV containing only the approved reply.
+- In the same smoke test, unsafe and rejected drafts stayed ineligible. Editing and in-flight regeneration removed approval. A competing edit triggered a real `409`, preserved the local text, and required a new save and approval before export. Candidate markup remained plain text.
+- At 375px and in landscape, verified the keyboard drawer, focus restoration, intent filtering, search, and lack of horizontal overflow. Also verified reduced motion, batch discovery from a fresh tab, recovery from a failed read, and disabled processing retry until the server returned batch status.
+
+### Findings and corrections
+
+- ESLint initially warned about an anonymous PostCSS config export. Assigned the configuration to a named variable before exporting it and reran lint cleanly.
+- The first browser run logged a missing favicon. Added the application icon and verified that the browser no longer requested the missing resource.
+- Review of the disconnected-processing path showed the old status could briefly enable retry. The UI now keeps retry disabled while a replacement status request is pending. The browser smoke delayed that request and verified the lockout.
+
+The existing Groq pipeline, dataset, holdout, and evaluation artifacts were preserved. The browser runs made no live Groq calls and recorded no human review scores.
 
 ## Day 5
 
