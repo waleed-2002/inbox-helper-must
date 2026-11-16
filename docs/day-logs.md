@@ -90,14 +90,27 @@ Before implementation, a development-only rerun reproduced 4/20 correct and 20 p
 - The same command with output `evidence/milestone-2-dev-paced.json` recorded the paced run at 23:35:34 PKT. It scored 19/20 (95%) without API failures. All three flagged injection cases went to manual writing. All 37 calls reported usage, estimated at $0.00802.
 - Independently reconciled message IDs, pending-review status, correct predictions, confusion counts, token totals, and estimated cost in both live artifacts. Results and the blank human-review rubric are in `docs/evaluation-m2.md` and `docs/reply-review-m2.md`.
 
-## Day 3
+## Day 3 · 2026-11-16–17 (PKT)
 
-- **Date**
-- **Active hours**
-- **Work and commit references**
-- **Commands and actual results**
-- **Failures and corrections**
-- **Personal reflection**
+**Active hours**
+
+**Personal reflection**
+
+### Verified work
+
+| Commit | Work |
+| --- | --- |
+| `d90e603` | Added the four SQLite tables, foreign keys, pinned backend dependencies, and bounded CSV parsing and export. Verified table creation and foreign key enforcement on a temporary file. |
+| `052c654` | Added the FastAPI review endpoints, serial processing, individual failure recovery, revision-checked transitions, and approval-only export. |
+
+### Verification
+
+- `.venv/bin/python -B -m pytest -q -p no:cacheprovider --ignore=tests/test_dataset.py` passed 89 tests, including 29 new API cases. The preserved dataset tests were excluded to keep the frozen holdout unseen.
+- A loopback Uvicorn run using a temporary database verified the OpenAPI document, CSV import, imported status, and a header-only export before approval. Groq was mocked in tests and was not called in the smoke run.
+- Verified concurrent generation and approval behavior, invalidation after edits and regeneration, approval of a safe manual replacement, rejection of unsafe or stale revisions, and formula neutralization in serialized CSV cells.
+- `uv pip check --python .venv/bin/python` reported compatible pinned dependencies. Starlette emitted one TestClient deprecation warning for its HTTPX compatibility adapter. The adapter worked in the pinned test environment.
+
+Original pipeline code, dataset, and evaluation artifacts remain at their Milestone 2 versions. No human review scores were recorded.
 
 ## Day 4
 
