@@ -28,6 +28,7 @@ _CHECKS = {
     "hiring_commitment": re.compile(
         r"\b(?:you're|you are|you have been|you've been)\s+(?:officially\s+)?"
         r"(?:hired|selected|shortlisted|rejected|approved|moving forward|advancing)\b"
+        r"|\byou (?:got the (?:job|role|position)|passed (?:the|your) (?:interview|screening|assessment))\b"
         r"|\b(?:your application (?:has been|was|is) (?:approved|accepted|rejected)|"
         r"the (?:role|job|position) is yours|welcome aboard|moving (?:you|your application) forward)\b"
         r"|\b(?:we've|we have|we are|we're|we will|we'll)\s+(?:already\s+)?"
@@ -36,6 +37,7 @@ _CHECKS = {
         r"|\b(?:pleased|excited|delighted) to offer (?:you|the)\b"
         r"|\b(?:interview|screening|meeting|panel|appointment|slot)\b[^.!?\n]{0,60}"
         r"\b(?:is|has been|was) (?:confirmed|scheduled|rescheduled|booked|cancelled|canceled)\b"
+        r"|\byour withdrawal (?:is|was|has been) (?:processed|confirmed|accepted)\b"
     ),
     "company_policy": re.compile(
         r"\b(?:our (?:company |hiring )?policy (?:is|requires|allows|states)|"

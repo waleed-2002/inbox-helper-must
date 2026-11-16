@@ -141,7 +141,9 @@ def test_invalid_classification_forces_manual_writing(mock_groq, change):
     ("The salary is $95,000.", "monetary_amount"),
     ("The range begins at 90k.", "monetary_amount"),
     ("We’re pleased to offer you the role.", "hiring_commitment"),
+    ("You got the job.", "hiring_commitment"),
     ("Your interview is confirmed.", "hiring_commitment"),
+    ("Your withdrawal has been processed.", "hiring_commitment"),
     ("Our policy allows remote work.", "company_policy"),
 ])
 def test_unsupported_draft_is_withheld(mock_groq, reply, expected):
@@ -174,3 +176,29 @@ def test_draft_failure_preserves_classification_and_requires_review(mock_groq, m
     assert result.draft_failure == failure
     assert result.draft.status == "pending_review" and result.draft.requires_manual_writing
     assert "sensitive provider detail" not in repr(result)
+
+
+def test_safe_draft_keeps_review_notes_visible(mock_groq):
+    provider, _, responses = mock_groq
+    responses.extend([
+        completion({**CLASSIFICATION, "needs_review": True, "review_reason": "Unclear role."}),
+        completion({**DRAFT, "needs_review": True, "review_reason": "Verify the application."}),
+    ])
+    result = process_message(provider, "Anything yet?")
+    assert result.draft.draft_reply == DRAFT["draft_reply"]
+    assert result.draft.review_reason == "Unclear role. Verify the application."
+    assert result.draft.status == "pending_review" and result.draft.needs_review
+
+
+def test_transient_errors_stop_after_two_retries(mock_groq):
+    provider, requests, responses = mock_groq
+    provider.client = provider.client.with_options(max_retries=2)
+    responses.extend(
+        httpx.Response(429, headers={"retry-after-ms": "1"}, json={"error": {"message": "Try again"}})
+        for _ in range(3)
+    )
+    result = process_message(provider, "Any updates?")
+    assert len(requests) == 3
+    assert result.classification_failure == "api_http_429"
+    assert result.draft_failure == "skipped_after_classification_failure"
+    assert result.draft.status == "pending_review" and result.draft.requires_manual_writing
