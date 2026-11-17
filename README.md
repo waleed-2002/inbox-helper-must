@@ -2,6 +2,20 @@
 
 Local recruitment workspace for CSV import, Groq triage, human draft review, and approved CSV export. The backend runs on FastAPI and SQLite. The browser workspace runs on Next.js.
 
+## Project structure
+
+| Location | Responsibility |
+| --- | --- |
+| `hiring_inbox/api.py` and `hiring_inbox/api_models.py` | FastAPI startup, routes, and their request and response contracts. |
+| `hiring_inbox/review_service.py` | Batch processing, draft revisions, approval, and export eligibility. |
+| `hiring_inbox/database.py` and `hiring_inbox/csv_io.py` | SQLite persistence and CSV validation and serialization. |
+| `hiring_inbox/pipeline.py` and its supporting modules | Classification and drafting, the Groq adapter, model response validation, and safety checks. |
+| `web/src/app/` and `web/src/features/inbox/` | Next.js routing and the inbox feature, including its API client, workspace, and review and import components. |
+| `web/src/components/ui/` and `web/src/lib/` | Shared UI controls and frontend utilities. |
+| `tests/`, `data/`, and `evidence/` | Python tests, the fictional evaluation fixture, and recorded evaluation results. |
+
+The browser calls the backend over HTTP. FastAPI owns validation, approval, and export eligibility. Python owns database access and Groq credentials.
+
 ## Run locally
 
 From the repository root, set up the backend on Python 3.11 or later and configure Groq with the root `.env.example`.

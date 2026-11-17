@@ -142,6 +142,18 @@ Original pipeline code, dataset, and evaluation artifacts remain at their Milest
 
 The existing Groq pipeline, dataset, holdout, and evaluation artifacts were preserved. The browser runs made no live Groq calls and recorded no human review scores.
 
+### Project structure follow-up
+
+| Commit | Work |
+| --- | --- |
+| `cea240e` | Moved HTTP request and response models into `hiring_inbox/api_models.py`. Compared the complete OpenAPI document before and after with `cmp`, which found identical output. |
+| `1e35dcf` | Grouped the frontend inbox in `web/src/features/inbox/` and moved upload state into its dialog. Verified that the existing untracked `web/AGENTS.md` matched the pinned Next.js generator byte for byte, then tracked it. |
+
+- `.venv/bin/python -B -m pytest -q -p no:cacheprovider --ignore=tests/test_dataset.py` passed 92 tests with the existing Starlette TestClient warning. `uv pip check --python .venv/bin/python` passed.
+- `npm --prefix web run lint`, `npm --prefix web run typecheck`, and `npm --prefix web run build` passed.
+- Playwright with a production frontend build, temporary SQLite, and an injected deterministic provider verified CSV validation, focus restoration, form reset, one request during an in-flight upload, duplicate import, processing, the unsaved-edit guard, approval, CSV download, and exclusion of pending and superseded replies. The initial smoke attempts used the wrong error text and an ambiguous revision selector. Corrected those assertions and reran against a fresh database.
+- Compared the pipeline, persistence code, tests, dependency manifests, dataset, and evaluation artifacts against `c368ac0` and found no differences. The smoke test used a new fictional message.
+
 ## Day 5
 
 - **Date**
