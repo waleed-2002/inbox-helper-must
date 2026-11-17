@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/fields";
 import { intentLabels, type BatchStatus, type BatchSummary, type CandidateMessage, type DraftSummary,
-  type Intent, type IntentGroup } from "@/lib/inbox-api";
+  type Intent, type IntentGroup } from "./inbox-api";
 import { cn } from "@/lib/utils";
 
 export type View = "inbox" | "outbox";

@@ -1,8 +1,8 @@
 import { AlertCircle, ArrowLeft, FilePenLine, History, RotateCw, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/fields";
-import { DraftLabel, EmptyState, Initials, InlineError, Loading } from "@/components/workspace-parts";
-import { intentLabels, readableError, type CandidateMessage, type Draft, type ReviewAction } from "@/lib/inbox-api";
+import { DraftLabel, EmptyState, Initials, InlineError, Loading } from "./workspace-parts";
+import { intentLabels, readableError, type CandidateMessage, type Draft, type ReviewAction } from "./inbox-api";
 
 const eventLabels = { approve: "Approved", reject: "Rejected", edit: "Edited", regenerate: "Regenerated" };
 const flagLabels: Record<string, string> = {

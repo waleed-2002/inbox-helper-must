@@ -2,14 +2,15 @@
 
 import { ArrowDownToLine, ClipboardList, Menu, PanelLeft, Plus, RotateCw, Upload } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { DraftReview } from "@/components/draft-review";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Input, Textarea } from "@/components/ui/fields";
-import { BatchProgress, EmptyState, InboxList, InlineError, Loading, Sidebar, type View } from "@/components/workspace-parts";
-import { ApiError, exportBatch, getBatch, getDraft, importBatch, isExportable, listBatches, processBatch,
-  readableError, reviewDraft, type CandidateMessage, type Draft, type Intent, type IntentGroup, type ReviewAction } from "@/lib/inbox-api";
+import { Textarea } from "@/components/ui/fields";
 import { useResource } from "@/lib/use-resource";
+import { DraftReview } from "./draft-review";
+import { ImportCsvDialog } from "./import-csv-dialog";
+import { ApiError, exportBatch, getBatch, getDraft, isExportable, listBatches, processBatch,
+  readableError, reviewDraft, type CandidateMessage, type Draft, type ImportReceipt, type Intent, type IntentGroup, type ReviewAction } from "./inbox-api";
+import { BatchProgress, EmptyState, InboxList, InlineError, Loading, Sidebar, type View } from "./workspace-parts";
 
 type Selection = { batchId: number | null; messageId: number | null; view: View };
 type EditBuffer = { draftId: number; revision: number; text: string };
@@ -17,7 +18,6 @@ type Notice = { kind: "error" | "info"; text: string };
 type Job = { batchId: number; kind: "process" | "regenerate" };
 
 const noGroups: IntentGroup[] = [];
-const maxCsvBytes = 1_048_576;
 
 export function InboxWorkspace({ initial }: { initial: Selection }) {
   const [selection, setSelection] = useState(initial);
@@ -30,15 +30,11 @@ export function InboxWorkspace({ initial }: { initial: Selection }) {
   const [exporting, setExporting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [importError, setImportError] = useState("");
-  const [importBusy, setImportBusy] = useState(false);
   const [reviewDialog, setReviewDialog] = useState<{ action: "reject" | "regenerate"; draft: Draft } | null>(null);
   const [reason, setReason] = useState("");
   const [discard, setDiscard] = useState<{ proceed: () => void } | null>(null);
   const generationLock = useRef(false);
   const reviewLock = useRef(false);
-  const importLock = useRef(false);
   const exportLock = useRef(false);
   const importFocus = useRef<HTMLElement | null>(null);
   const reviewFocus = useRef<HTMLElement | null>(null);
@@ -160,30 +156,16 @@ export function InboxWorkspace({ initial }: { initial: Selection }) {
   function openImport() {
     importFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     guardEdits(() => {
-      setEdit(null); setCsvFile(null); setImportError(""); setImportOpen(true);
+      setEdit(null); setImportOpen(true);
     });
   }
 
-  async function submitImport(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (importLock.current) return;
-    if (!csvFile || csvFile.size === 0) { setImportError("Choose a non-empty CSV file."); return; }
-    if (csvFile.size > maxCsvBytes) { setImportError("CSV exceeds the 1 MiB upload limit."); return; }
-    importLock.current = true;
-    setImportBusy(true); setImportError("");
-    try {
-      const receipt = await importBatch(csvFile);
-      setSelection({ batchId: receipt.batch_id, messageId: null, view: "inbox" });
-      setSearch(""); setIntent("all"); setImportOpen(false);
-      batches.refresh(); refreshBatch();
-      setNotice({ kind: "info", text: receipt.duplicate ? `Opened existing batch #${receipt.batch_id}.` :
-        `Imported ${receipt.message_count} ${receipt.message_count === 1 ? "message" : "messages"}.` });
-    } catch (error) {
-      setImportError(readableError(error));
-    } finally {
-      importLock.current = false;
-      setImportBusy(false);
-    }
+  function openImportedBatch(receipt: ImportReceipt) {
+    setSelection({ batchId: receipt.batch_id, messageId: null, view: "inbox" });
+    setSearch(""); setIntent("all"); setImportOpen(false);
+    batches.refresh(); refreshBatch();
+    setNotice({ kind: "info", text: receipt.duplicate ? `Opened existing batch #${receipt.batch_id}.` :
+      `Imported ${receipt.message_count} ${receipt.message_count === 1 ? "message" : "messages"}.` });
   }
 
   async function startProcessing() {
@@ -345,22 +327,8 @@ export function InboxWorkspace({ initial }: { initial: Selection }) {
       </DialogContent>
     </Dialog>
 
-    <Dialog open={importOpen} onOpenChange={(open) => { if (!importLock.current) setImportOpen(open); }}>
-      <DialogContent onCloseAutoFocus={(event) => { event.preventDefault(); importFocus.current?.focus(); }}>
-        <DialogTitle>Import CSV</DialogTitle>
-        <DialogDescription>Use the columns message_id, candidate_name, and message_text. Up to 50 messages and 1 MiB.</DialogDescription>
-        <form className="dialog-form" onSubmit={submitImport}>
-          <label htmlFor="batch-file">Candidate CSV</label>
-          <Input id="batch-file" type="file" accept=".csv,text/csv" disabled={importBusy} aria-invalid={Boolean(importError)}
-            aria-describedby={importError ? "import-error" : undefined} onChange={(event) => { setCsvFile(event.target.files?.[0] ?? null); setImportError(""); }} />
-          {importError && <InlineError><span id="import-error">{importError}</span></InlineError>}
-          <div className="dialog-actions">
-            <Button variant="outline" disabled={importBusy} onClick={() => setImportOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={importBusy}>{importBusy && <Loading />}Import batch</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <ImportCsvDialog open={importOpen} onClose={() => setImportOpen(false)} onImported={openImportedBatch}
+      onRestoreFocus={() => importFocus.current?.focus()} />
 
     <Dialog open={reviewDialog !== null} onOpenChange={(open) => { if (!open) setReviewDialog(null); }}>
       <DialogContent onCloseAutoFocus={(event) => { event.preventDefault(); reviewFocus.current?.focus(); }}>

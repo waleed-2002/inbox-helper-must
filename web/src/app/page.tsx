@@ -1,4 +1,4 @@
-import { InboxWorkspace } from "@/components/inbox-workspace";
+import { InboxWorkspace } from "@/features/inbox/inbox-workspace";
 
 function validId(value: string | string[] | undefined) {
   if (typeof value !== "string" || !/^\d+$/.test(value)) return null;
