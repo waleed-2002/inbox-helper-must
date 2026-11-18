@@ -154,11 +154,14 @@ The existing Groq pipeline, dataset, holdout, and evaluation artifacts were pres
 - Playwright with a production frontend build, temporary SQLite, and an injected deterministic provider verified CSV validation, focus restoration, form reset, one request during an in-flight upload, duplicate import, processing, the unsaved-edit guard, approval, CSV download, and exclusion of pending and superseded replies. The initial smoke attempts used the wrong error text and an ambiguous revision selector. Corrected those assertions and reran against a fresh database.
 - Compared the pipeline, persistence code, tests, dependency manifests, dataset, and evaluation artifacts against `c368ac0` and found no differences. The smoke test used a new fictional message.
 
-## Day 5
+## Day 5 · 2026-11-18 (PKT)
 
-- **Date**
-- **Active hours**
-- **Work and commit references**
-- **Commands and actual results**
-- **Failures and corrections**
-- **Personal reflection**
+**Active hours**
+
+**Personal reflection**
+
+### Verified work
+
+- Pushed the workspace and structure follow-up through `e1c1b5f` to `origin/main` and verified that the local and upstream branches matched.
+- Audited the submission form against the repository. Consolidated the final instructions in [directive.md](../directive.md) and prepared a [one-page reflection draft](what-i-unlearned.md) based on recorded project evidence. The quest demo and career videos are separate submission items.
+- Reran `.venv/bin/python -B -m pytest -q -p no:cacheprovider --ignore=tests/test_dataset.py`. All 92 tests passed with the existing Starlette TestClient deprecation warning. The full-fixture tests were excluded to keep the frozen holdout unseen.
