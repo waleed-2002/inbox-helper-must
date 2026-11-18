@@ -2,7 +2,9 @@
 
 ## Problem and scope
 
-Recruiters need to triage inbound candidate messages and prepare concise replies. The assistant will group messages by their primary intent and propose short drafts for human review. Milestone 1 defines the taxonomy and measures a deterministic text-only classifier on fictional messages. The classifier accepts message text and returns one intent.
+Recruiters need to triage inbound candidate messages and prepare concise replies. Quest A builds a local inbox that imports candidate messages from CSV, groups them by primary intent, and proposes short replies. A recruiter reviews each reply and explicitly approves the current revision before it can appear in the export. The tool never sends email.
+
+The first milestone established the taxonomy and a deterministic baseline on fictional messages. The [final directive](directive.md) describes the delivered workflow and verification evidence.
 
 ## Intent taxonomy
 

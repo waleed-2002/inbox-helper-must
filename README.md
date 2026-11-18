@@ -18,7 +18,7 @@ The browser calls the backend over HTTP. FastAPI owns validation, approval, and 
 
 ## Run locally
 
-From the repository root, set up the backend on Python 3.11 or later and configure Groq with the root `.env.example`.
+From the repository root, use Python 3.11 or later and `uv`. On first setup, copy `.env.example` to `.env` and set `GROQ_API_KEY` there. Keep that file local.
 
 ```sh
 uv venv --python 3.11 .venv
@@ -35,5 +35,14 @@ npm --prefix web run dev
 ```
 
 Open the [recruiter workspace](http://127.0.0.1:3000) or the [API reference](http://127.0.0.1:8000/docs). Use the exact loopback hostname shown here so it matches the configured browser origin. The workspace is intended for one trusted local operator.
+
+To try the workflow, save this fictional example as `demo.csv` and import it.
+
+```csv
+message_id,candidate_name,message_text
+demo-1,Avery Vale,Could you share an update on my application?
+```
+
+Select **Process batch**, open the message, review or edit the reply, and select **Approve reply**. In the **Outbox**, select **Export CSV**.
 
 See the [Milestone 4 directive](docs/directive-v4.md) for CSV format, review steps, configuration, and test commands, and the [UI design guide](docs/ui-design.md) for the visual system.

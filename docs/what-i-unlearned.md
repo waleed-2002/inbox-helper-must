@@ -1,19 +1,9 @@
 # What I unlearned
 
-*Draft for contributor review. The examples come from the project record. Edit the first-person reflections to match your own experience before submitting.*
+Before this quest, I treated a working demo and passing tests as enough evidence to move on. The inbox helper changed where I put my attention. The first classifier passed its focused tests and still sent every development message to “Other.” It scored 4 out of 20 because the candidate messages asked for things indirectly. The tests confirmed that the rules ran as written. The examples showed how little those rules covered.
 
-## A working demo is weak evidence
+Working AI-first made it quicker to try another approach. It also made it easier to accept a plausible answer too early. The first live model run missed six classifications because of rate limits, and one of its returned labels followed an instruction embedded in a candidate message. After pacing the requests and screening for recognizable embedded instructions, the next run got 19 out of 20 on the same development set. That was enough to show progress on the examples we had studied. A fresh set would tell me more about how the tool handles messages I have yet to see.
 
-The rule classifier was deterministic and passed its focused tests. It still predicted `other` for every development message and scored 4/20. The tests showed that the rules behaved as written. The candidate examples showed how rarely the rules matched indirect requests and references across sentences. I would now write examples from the task before looking at the implementation, keep a baseline, and use the misses to decide what to build next.
+The draft replies exposed a different problem. Two sounded professional while claiming the recruiting team had policies it had never provided. Reading the saved replies surfaced those claims. I also learned to test what happens after approval. The browser check confirmed that editing an approved reply removes the old revision from export and requires a new approval.
 
-## A better score can hide different failures
-
-The first live Groq run reached 13/20, with six classification calls lost to rate limits. One returned label followed an embedded instruction. Pacing and candidate-text screening were part of the next iteration, which reached 19/20 on the same 20 development messages. Because that set guided the changes, the result tells me how the revised system performed on those examples. For a stronger estimate, I would use a fresh unseen set and report unavailable classifications separately from wrong ones.
-
-## A polished reply can still invent a policy
-
-Two drafts in the paced run sounded professional while inventing restrictions on what recruiters could disclose. Reviewing the saved outputs surfaced the problem. The offline safety recheck withheld those drafts and left 13 available for human review. That changed the question I ask of a draft. I now look for the facts supporting each claim and check whether a recruiter can catch and correct an unsupported statement before it leaves the tool.
-
-## Approval belongs to a revision
-
-The browser test gave me a concrete way to check human review. I could approve a reply, export it, then edit it and verify that the previously approved revision disappeared from export. I would use this workflow again. Give AI bounded implementation tasks, keep the evidence it produces, and independently test the consequences that matter to the person using the tool.
+For my next project, I’ll give AI a small task with a concrete check, keep the outputs that failed, and verify the result independently. With the inbox, that meant checking three things separately: whether a message went to the right group, whether the reply stayed grounded, and whether the exported text matched the version a person approved. Those checks changed both the product and how I work with AI.
