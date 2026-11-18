@@ -36,12 +36,7 @@ npm --prefix web run dev
 
 Open the [recruiter workspace](http://127.0.0.1:3000) or the [API reference](http://127.0.0.1:8000/docs). Use the exact loopback hostname shown here so it matches the configured browser origin. The workspace is intended for one trusted local operator.
 
-To try the workflow, save this fictional example as `demo.csv` and import it.
-
-```csv
-message_id,candidate_name,message_text
-demo-1,Avery Vale,Could you share an update on my application?
-```
+To try the workflow, import [quest-demo.csv](examples/quest-demo.csv). It contains eight fictional candidate emails.
 
 Select **Process batch**, open the message, review or edit the reply, and select **Approve reply**. In the **Outbox**, select **Export CSV**.
 

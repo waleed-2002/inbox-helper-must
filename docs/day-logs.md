@@ -14,6 +14,8 @@ I finished the FastAPI and SQLite review workflow and built the Next.js recruiti
 
 I pushed the implementation, reviewed it against the submission form, and prepared the final directive and reflection. I reran `.venv/bin/python -B -m pytest -q -p no:cacheprovider --ignore=tests/test_dataset.py`. All 92 tests passed with the existing Starlette TestClient warning. I excluded the full-fixture tests to keep the holdout unseen. The initial submission documents were committed in `04a573a`.
 
+I prepared the [eight-email demo batch](../examples/quest-demo.csv) and exercised the FastAPI endpoints with live Groq and temporary SQLite. All eight primary intents matched the demo expectations. Seven drafts were available for review, and the safety check held one withdrawal reply for manual writing. Duplicate import reopened the batch. Before approval the export was empty, after approval it contained one row, and editing that reply cleared it again.
+
 ## Day 4
 
 No additional project work recorded as of November 18.
